@@ -11,7 +11,6 @@ void app_main(void){
 
 	// Configura a atenuacao do canal do ADC1
 	// GPIO34 corresponde ao ADC1_CHANNEL_6
-	ADC
 	adc1_config_channel_atten(ADC1_CHANNEL_6, ADC1_ATTEN_DB_0);
 
 	//--- 2. CONFIGURACAO DO GPIO (LED) ---
