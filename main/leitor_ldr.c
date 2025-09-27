@@ -1,43 +1,43 @@
-#include "driver/gpio.h"
-#include "driver/adc.h"
 #include <stdio.h>
+
+#include "driver/adc.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-void app_main(void){
-	//--- 1. CONFIGURACAO DO ADC ---
-	// Configura a resolucao do ADC1 para 12 bits (0-4095)
-	adc1_config_width(ADC_WIDTH_BIT_12);
+void app_main(void) {
+    //--- 1. CONFIGURACAO DO ADC ---
+    // Configura a resolucao do ADC1 para 12 bits (0-4095)
+    adc1_config_width(ADC_WIDTH_BIT_12);
 
-	// Configura a atenuacao do canal do ADC1
-	// GPIO34 corresponde ao ADC1_CHANNEL_6
-	adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_0);
+    // Configura a atenuacao do canal do ADC1
+    // GPIO35 corresponde ao ADC1_CHANNEL_7
+    adc1_config_channel_atten(ADC1_CHANNEL_7, ADC_ATTEN_DB_0);
 
-	//--- 2. CONFIGURACAO DO GPIO (LED) ---
-	// Configura o GPIO 23 como saída
-	gpio_set_direction(GPIO_NUM_23, GPIO_MODE_OUTPUT);
+    //--- 2. CONFIGURACAO DO GPIO (LED) ---
+    // Configura o GPIO 23 como saída
+    gpio_set_direction(GPIO_NUM_23, GPIO_MODE_OUTPUT);
 
-	//--- LOOP PRINCIPAL ---
-	while(1){
-		// 1. ler o valor bruto do ADC do canal 6 (GPIO34)
-		int valor_adc = adc1_get_raw(ADC1_CHANNEL_6);
+    //--- LOOP PRINCIPAL ---
+    while (1) {
+        // 1. ler o valor bruto do ADC do canal 7 (GPIO35)
+        int valor_adc = adc1_get_raw(ADC1_CHANNEL_7);
 
-		// 2. Imprimir o valor no console (monitor seial)
-		printf("Valor do LDR: %d\n", valor_adc);
+        // 2. Imprimir o valor no console (monitor seial)
+        printf("Valor do LDR: %d\n", valor_adc);
 
-		// 3. Aguardar 1 segundo antes da proxima leitura
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // 3. Aguardar 1 segundo antes da proxima leitura
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-		// 4. Controlar o LED com base no valor lido
+        // 4. Controlar o LED com base no valor lido
 
-		// Se for maior que o limiar (mais luz, menos resistencia), desliga o LED
-		// O valor 1500 eh um limiar inicial que ajustarei em brve
+        // Se for maior que o limiar (mais luz, menos resistencia), desliga o
+        // LED O valor 1500 eh um limiar inicial que ajustarei em brve
 
-		if (valor_adc > 1500)
-			gpio_set_level(GPIO_NUM_23, 0);
-		else
-		// Se for menor (menos luz, mais resistencia), liga o LED
-			gpio_set_level(GPIO_NUM_23, 1);
-
-	}
+        if (valor_adc > 1500)
+            gpio_set_level(GPIO_NUM_23, 0);
+        else
+            // Se for menor (menos luz, mais resistencia), liga o LED
+            gpio_set_level(GPIO_NUM_23, 1);
+    }
 }
