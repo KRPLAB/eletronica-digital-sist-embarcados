@@ -1,5 +1,6 @@
 # Arquivos gerados pelo processo de build
 /build/
+main/build/
 
 # Arquivos de configuração local e de backup
 /sdkconfig.old
