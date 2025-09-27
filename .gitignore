@@ -1,13 +1,21 @@
-# Arquivos gerados pelo processo de build
-/build/
+ 
+# Pastas de build
+build/
 main/build/
 
-# Arquivos de configuração local e de backup
-/sdkconfig.old
-/sdkconfig.bak
+# Configurações locais (geradas automaticamente pelo idf.py)
+sdkconfig.old
+sdkconfig.defaults
 
-# Arquivos de editores
+# Arquivos temporários do VSCode/CLion/etc
 .vscode/
 .idea/
+
+# Arquivos de log
+*.log
+
+# Arquivos temporários do sistema
 *.swp
 *.swo
+*.tmp
+.DS_Store
