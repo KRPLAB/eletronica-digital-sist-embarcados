@@ -26,5 +26,17 @@ void app_main(void){
 
 		// 3. Aguardar 1 segundo antes da proxima leitura
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+		// 4. Controlar o LED com base no valor lido
+
+		// Se for maior que o limiar (mais luz, menos resistencia), desliga o LED
+		// O valor 1500 eh um limiar inicial que ajustarei em brve
+
+		if (valor_adc > 1500)
+			gpio_set_level(GPIO_NUM_23, 0);
+		else
+		// Se for menor (menos luz, mais resistencia), liga o LED
+			gpio_set_level(GPIO_NUM_23, 1);
+
 	}
 }
