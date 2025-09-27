@@ -19,7 +19,7 @@ void app_main(void){
 	//--- LOOP PRINCIPAL ---
 	while(1){
 		// 1. ler o valor bruto do ADC do canal 6 (GPIO34)
-		int valod adc = adc1_get_raw(ADC_CHANNEL_6);
+		int valor_adc = adc1_get_raw(ADC1_CHANNEL_6);
 
 		// 2. Imprimir o valor no console (monitor seial)
 		printf("Valor do LDR: %d\n", valor_adc);
