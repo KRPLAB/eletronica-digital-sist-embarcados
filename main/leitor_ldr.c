@@ -1,6 +1,8 @@
-#include "drivers/gpio.h"
-#include "drivers/adc.h"
+#include "driver/gpio.h"
+#include "driver/adc.h"
 #include <stdio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 void app_main(void){
 	//--- 1. CONFIGURACAO DO ADC ---

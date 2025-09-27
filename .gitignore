@@ -1,0 +1,12 @@
+# Arquivos gerados pelo processo de build
+/build/
+
+# Arquivos de configuração local e de backup
+/sdkconfig.old
+/sdkconfig.bak
+
+# Arquivos de editores
+.vscode/
+.idea/
+*.swp
+*.swo
