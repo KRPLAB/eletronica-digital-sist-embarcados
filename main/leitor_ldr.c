@@ -4,8 +4,24 @@
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "nvs.h"
+#include "nvs_flash.h"
 
 void app_main(void) {
+    //--- 0. INICIALIZACAO DO NVS ---
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        // Se o NVS estiver corrompido ou em uma versao antiga, apaga e reinicia
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+
+    // Verifica se houve algum erro fatal na inicializacao.
+    ESP_ERROR_CHECK(ret);
+
+    printf("NVS inicializado com sucesso!\n");
+
     //--- 1. CONFIGURACAO DO ADC ---
     // Configura a resolucao do ADC1 para 12 bits (0-4095)
     adc1_config_width(ADC_WIDTH_BIT_12);
@@ -16,7 +32,7 @@ void app_main(void) {
 
     //--- 2. CONFIGURACAO DO GPIO (LED) ---
     // Configura o GPIO 23 como saída
-    gpio_set_direction(GPIO_NUM_23, GPIO_MODE_OUTPUT);
+    gpio_set_direction(GPIO_NUM_19, GPIO_MODE_OUTPUT);
 
     //--- LOOP PRINCIPAL ---
     while (1) {
@@ -35,9 +51,9 @@ void app_main(void) {
         // LED O valor 1500 eh um limiar inicial que ajustarei em brve
 
         if (valor_adc > 1500)
-            gpio_set_level(GPIO_NUM_23, 0);
+            gpio_set_level(GPIO_NUM_19, 0);
         else
             // Se for menor (menos luz, mais resistencia), liga o LED
-            gpio_set_level(GPIO_NUM_23, 1);
+            gpio_set_level(GPIO_NUM_19, 1);
     }
 }
