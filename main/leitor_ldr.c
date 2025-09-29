@@ -1,11 +1,62 @@
 #include <stdio.h>
-
 #include "driver/adc.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+
+// Funcao para salvar um valor inteiro no NVS
+esp_err_t salvar_valor_nvs(const char* chave, int32_t valor) {
+	nvs_handle_t my_handle;
+	esp_err_t err;
+
+	// 1. Abre o NVS no namespace "storage"
+	err = nvs_open("storage", NVS_READWRITE, &my_handle);
+	if (err != ESP_OK) {
+		printf("Erro (%s) ao abrir o NVS!\n", esp_err_to_name(err));
+		return err;
+	}
+
+	// 2. Escreve o valor na chave especificada
+	err = nvs_set_i32(my_handle, chave, valor);
+	if (err != ESP_OK) {
+		printf("Erro (%s) ao escrever no NVS!\n", esp_err_to_name(err));
+		nvs_close(my_handle);
+		return err;
+	}
+
+	// 3. Aplica as mudanças (salva permanentemente)
+	err = nvs_commit(my_handle);
+	if (err != ESP_OK) {
+		printf("Erro (%s) ao comitar no NVS!\n", esp_err_to_name(err));
+		nvs_close(my_handle);
+		return err;
+	}
+
+	// 4. Fecha o NVS
+	nvs_close(my_handle);
+	return ESP_OK;
+}
+
+// Funcao para ler um valor inteiro do NVS
+esp_err_t ler_valor_nvs(const char* chave, int32_t* valor_lido) {
+	nvs_handle_t my_handle;
+	esp_err_t err;
+
+	err = nvs_open("storage", NVS_READONLY, &my_handle);
+	if (err != ESP_OK) {
+		printf("Erro (%s) ao abrir NVS para leitura!\n", esp_err_to_name(err));
+		return err;
+	}
+
+	// Tenta ler o valor da chave.
+	// Se a chave nao existir, a funcao retornara ESP_ERR_NVS_NOT_FOUND.
+	err = nvs_get_i32(my_handle, chave, valor_lido);
+
+	nvs_close(my_handle);
+	return err;
+}
 
 void app_main(void) {
     //--- 0. INICIALIZACAO DO NVS ---
