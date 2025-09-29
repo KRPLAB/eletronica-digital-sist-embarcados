@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "author": "Alvaro Cantieri",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-led", "id": "led1", "top": 34.8, "left": 195.8, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 128.75,
+      "left": 124.8,
+      "attrs": { "value": "1000" }
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": -6.4,
+      "left": -248.8,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "r1:2", "led1:A", "green", [ "v0", "h37.2" ] ],
+    [ "esp:19", "r1:1", "green", [ "h0" ] ],
+    [ "led1:C", "esp:GND.2", "green", [ "v0", "h-86", "v-48" ] ],
+    [ "ldr1:VCC", "esp:3V3", "red", [ "h0" ] ],
+    [ "ldr1:AO", "esp:33", "gold", [ "h67.2", "v143.3" ] ],
+    [ "ldr1:GND", "esp:GND.1", "black", [ "h38.4", "v182" ] ]
+  ],
+  "dependencies": {}
+}

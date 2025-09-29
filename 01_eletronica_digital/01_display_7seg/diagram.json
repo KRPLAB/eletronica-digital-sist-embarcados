@@ -1,0 +1,30 @@
+{
+    "version": 1,
+    "author": "Ahad Shanavas12",
+    "editor": "wokwi",
+    "parts": [
+      { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -76.8, "left": 139.24, "attrs": {} },
+      {
+        "type": "wokwi-7segment",
+        "id": "sevseg1",
+        "top": 33.78,
+        "left": -14.12,
+        "attrs": { "common": "cathode" }
+      }
+    ],
+    "connections": [
+      [ "esp:TX", "$serialMonitor:RX", "", [] ],
+      [ "esp:RX", "$serialMonitor:TX", "", [] ],
+      [ "sevseg1:COM.2", "esp:GND.2", "green", [ "h0", "v-191.16", "h345.6", "v124.8" ] ],
+      [ "sevseg1:COM.1", "esp:GND.2", "green", [ "h0", "v211.2", "h345.6", "v-336" ] ],
+      [ "sevseg1:F", "esp:32", "green", [ "v0" ] ],
+      [ "sevseg1:A", "esp:33", "green", [ "v0" ] ],
+      [ "sevseg1:B", "esp:25", "green", [ "v0" ] ],
+      [ "sevseg1:C", "esp:14", "green", [ "v38.4", "h86.4", "v-9.6" ] ],
+      [ "sevseg1:DP", "esp:27", "green", [ "v28.8", "h67.2", "v-86.4" ] ],
+      [ "sevseg1:E", "esp:16", "green", [ "v57.6", "h316.8", "v-105.6", "h-9.6" ] ],
+      [ "sevseg1:G", "esp:12", "green", [ "v-37.56", "h96", "v67.2" ] ],
+      [ "sevseg1:D", "esp:4", "green", [ "v48", "h288", "v-86.4", "h9.6" ] ]
+    ],
+    "dependencies": {}
+  }
