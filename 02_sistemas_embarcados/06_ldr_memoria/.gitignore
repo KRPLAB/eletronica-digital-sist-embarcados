@@ -1,21 +1,89 @@
- 
+# ==========================================================
+# Arquivos e pastas de build do ESP-IDF e Compiladores
+# ==========================================================
 # Pastas de build
-build/
-main/build/
+/build/
+/main/build/
 
-# Configurações locais (geradas automaticamente pelo idf.py)
+# Binários e executáveis
+*.elf
+*.bin
+*.hex
+*.map
+*.exe
+*.out
+*.app
+*.img
+*.ota
+
+# Arquivos objeto e bibliotecas
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# Cabeçalhos pré-compilados
+*.gch
+*.pch
+
+# Componentes gerenciados e descrição do projeto
+/managed_components/
+project_description.json
+
+
+# ==========================================================
+# Configurações locais e backups do ESP-IDF
+# ==========================================================
+sdkconfig
 sdkconfig.old
 sdkconfig.defaults
+# Descomente a linha abaixo se sua tabela de partição não deve ser versionada
+# partition_table.csv
 
-# Arquivos temporários do VSCode/CLion/etc
-.vscode/
+
+# ==========================================================
+# Ambientes virtuais e cache do Python
+# ==========================================================
+.env/
+.venv/
+.python_env/
+env/
+venv/
+__pycache__/
+*.pyc
+pip-selfcheck.json
+*.lock
+
+
+# ==========================================================
+# Arquivos de IDEs e Editores de Código
+# ==========================================================
 .idea/
+.vscode/
+.settings/
+CMakeLists.txt.user
 
-# Arquivos de log
+
+# ==========================================================
+# Logs, arquivos temporários e de backup
+# ==========================================================
 *.log
-
-# Arquivos temporários do sistema
+*.tmp
+*.bak
 *.swp
 *.swo
-*.tmp
+*.swn
+*.orig
+monitor.log
+
+
+# ==========================================================
+# Arquivos de Sistema Operacional (macOS, Windows)
+# ==========================================================
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
