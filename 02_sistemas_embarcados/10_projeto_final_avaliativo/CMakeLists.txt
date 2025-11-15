@@ -1,6 +1,8 @@
-# The following five lines of boilerplate have to be in your project's
-# CMakeLists in this exact order for cmake to work correctly
+# Define a versão mínima do CMake
 cmake_minimum_required(VERSION 3.16)
 
+# Inclui a funcionalidade padrão do ESP-IDF
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(10_projeto_final_avaliativo)
+
+# Define o nome do seu projeto
+project(detector_de_gas)
