@@ -1,18 +1,21 @@
 #include <stdint.h>
 #include "mq5_sensor.h"
-#include "driver/adc.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_continuous.h"
 
 // --- Configurações do Sensor ---
-#define MQ5_CHANNEL     ADC1_CHANNEL_6  // GPIO 34
+#define MQ5_CHANNEL     ADC_CHANNEL_6  // GPIO 34
 #define GAS_THRESHOLD   2000            // Limiar de perigo (a ser ajustado conforme necessário melhor pesquisado a respeito do sensor MQ-5)
 #define READ_INTERVAL_MS 1000
 
 static const char *TAG = "MQ5_SENSOR";
 
 static QueueHandle_t local_alert_queue;
+static adc_oneshot_unit_handle_t adc_handle;
+static adc_oneshot_chan_cfg_t chan_cfg;
 
 /**
  * @brief Tarefa (Task) que lê o sensor em loop.
@@ -27,14 +30,17 @@ static void sensor_task(void *pvParameters)
 
     int current_alert_state = 0;
     int new_alert_state = 0;
+    int val_raw = 0;
 
     while (1) {
-        int val_raw = adc1_get_raw(MQ5_CHANNEL);
+        if (adc_oneshot_read(adc_handle, MQ5_CHANNEL, &val_raw) != ESP_OK) {
+            ESP_LOGE(TAG, "Falha ao ler ADC!");
+            continue;
+        }
 
         if (val_raw > GAS_THRESHOLD) {
             new_alert_state = 1;
-            ESP_LOGW(TAG, "Quantidade de gás acima do limite detectado! Valor ADC: %d", val_raw);
-            ESP_LOGW(TAG, "Ativando buzzer e enviando mensagem MQTT.");
+            ESP_LOGW(TAG, "Gás acima do limite! Valor ADC: %d", val_raw);
         } else {
             new_alert_state = 0;
         }
@@ -42,9 +48,7 @@ static void sensor_task(void *pvParameters)
         if (new_alert_state != current_alert_state) {
             current_alert_state = new_alert_state;
             ESP_LOGI(TAG, "Estado mudou para: %d. Enviando para fila.", current_alert_state);
-            
-            // xQueueSend(handle_da_fila, ponteiro_para_o_dado, tempo_de_espera)
-            // Tenta enviar o novo estado para a fila.
+
             if (xQueueSend(local_alert_queue, &current_alert_state, pdMS_TO_TICKS(100)) != pdTRUE) {
                 ESP_LOGE(TAG, "Falha ao enviar para a fila!");
             }
@@ -61,9 +65,16 @@ void mq5_sensor_init(QueueHandle_t queue)
 {
     local_alert_queue = queue;
 
-    // Configura o ADC
-    adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten(MQ5_CHANNEL, ADC_ATTEN_DB_11);
+    adc_oneshot_unit_init_cfg_t init_cfg = {
+        .unit_id = ADC_UNIT_1,
+    };
+    
+    adc_oneshot_new_unit(&init_cfg, &adc_handle);
+
+    chan_cfg.atten = ADC_ATTEN_DB_12;
+    chan_cfg.bitwidth = ADC_BITWIDTH_12;
+
+    adc_oneshot_config_channel(adc_handle, MQ5_CHANNEL, &chan_cfg);
 
     // Cria a Tarefa A
     // xTaskCreate(função_da_tarefa, "nome_tarefa", stack_size, parametros, prioridade, handle_tarefa)
