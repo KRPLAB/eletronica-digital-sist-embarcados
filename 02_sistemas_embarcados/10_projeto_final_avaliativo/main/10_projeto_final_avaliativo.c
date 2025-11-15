@@ -1,57 +1,55 @@
-#include <stdio.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <driver/gpio.h>
-#include <driver/adc.h>
-#include <driver/ledc.h>
+#include <stdint.h>
+// Includes do FreeRTOS (Sistema Operacional)
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+
+// Includes dos seus Módulos
+#include "mq5_sensor.h"
+#include "buzzer_control.h"
+#include "wifi_manager.h"
+#include "mqtt_manager.h"
+
+// Includes de utilitários do ESP-IDF
+#include "nvs_flash.h" // Necessário para o Wi-Fi
 #include "esp_log.h"
 
-#define BUZZ_PIN 19
-#define MQ5_CHANNEL ADC1_CHANNEL_6
-#define GAS_THRESHOLD 2000
+static const char *TAG = "APP_MAIN";
 
-static const char *TAG = "GAS_SENSOR";
+/**
+ * @brief Fila para comunicação entre o sensor de gás e o controle do buzzer.
+ * A fila transporta inteiros simples (0 para OK, 1 para ALERTA).
+ * Essa fila é criada em app_main() e passada para os módulos que precisam dela.
+ */
+QueueHandle_t gas_alert_queue;
 
-void beep_pwm(void) {
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 512);
-    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
-    vTaskDelay(pdMS_TO_TICKS(500));
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
-    ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
-}
+void app_main(void)
+{
+    ESP_LOGI(TAG, "Iniciando o Sistema Detector de Gás...");
 
-void app_main(void) {
-    adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten(MQ5_CHANNEL, ADC_ATTEN_DB_11);
-
-    // PWM
-    ledc_timer_config_t timer = {
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .timer_num = LEDC_TIMER_0,
-        .duty_resolution = LEDC_TIMER_10_BIT,
-        .freq_hz = 1000,
-        .clk_cfg = LEDC_AUTO_CLK
-    };
-    ledc_timer_config(&timer);
-
-    ledc_channel_config_t channel = {
-        .gpio_num = BUZZ_PIN,
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .channel = LEDC_CHANNEL_0,
-        .timer_sel = LEDC_TIMER_0,
-        .duty = 0
-    };
-    ledc_channel_config(&channel);
-
-    ESP_LOGI(TAG, "Sistema iniciado.");
-
-    while (1) {
-        int val = adc1_get_raw(MQ5_CHANNEL);
-        ESP_LOGI(TAG, "Leitura: %d", val);
-
-        if (val > GAS_THRESHOLD)
-            beep_pwm();
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
+    // 1. Inicializar o NVS (Non-Volatile Storage) - essencial para o Wi-Fi
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
     }
+    ESP_ERROR_CHECK(ret);
+
+    // 2. Criar a Fila de Alertas
+    // xQueueCreate(tamanho_da_fila, tamanho_de_cada_item)
+    gas_alert_queue = xQueueCreate(10, sizeof(int));
+    if (gas_alert_queue == NULL)
+        ESP_LOGE(TAG, "Falha ao criar a fila!");
+    else
+        ESP_LOGI(TAG, "Fila de alertas criada com sucesso.");
+
+    // 3. Inicializar os Módulos
+    // (Ainda em desenvolvimento para focar no sensor e buzzer primeiro)
+    wifi_manager_init();
+    mqtt_manager_init();
+
+    mq5_sensor_init(gas_alert_queue);
+    buzzer_control_init(gas_alert_queue);
+
+    ESP_LOGI(TAG, "Inicialização completa. Tarefas em execução.");
 }
