@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/event_groups.h"
 
 // Includes dos seus Módulos
 #include "mq5_sensor.h"
@@ -12,6 +13,7 @@
 
 // Includes de utilitários do ESP-IDF
 #include "nvs_flash.h" // Necessário para o Wi-Fi
+#include "esp_netif.h" 
 #include "esp_log.h"
 
 static const char *TAG = "APP_MAIN";
@@ -22,6 +24,7 @@ static const char *TAG = "APP_MAIN";
  * Essa fila é criada em app_main() e passada para os módulos que precisam dela.
  */
 QueueHandle_t gas_alert_queue;
+EventGroupHandle_t wifi_event_group;
 
 void app_main(void)
 {
@@ -35,21 +38,43 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
-    // 2. Criar a Fila de Alertas
-    // xQueueCreate(tamanho_da_fila, tamanho_de_cada_item)
+    // 2. Inicializar o TCP/IP stack
+    ESP_ERROR_CHECK(esp_netif_init());
+
+    // 3. Criar a Fila de Alertas e Event Group
     gas_alert_queue = xQueueCreate(10, sizeof(int));
-    if (gas_alert_queue == NULL)
-        ESP_LOGE(TAG, "Falha ao criar a fila!");
-    else
-        ESP_LOGI(TAG, "Fila de alertas criada com sucesso.");
+    wifi_event_group = xEventGroupCreate();
 
-    // 3. Inicializar os Módulos
-    // (Ainda em desenvolvimento para focar no sensor e buzzer primeiro)
-    wifi_manager_init();
-    mqtt_manager_init();
+    if (gas_alert_queue == NULL || wifi_event_group == NULL) {
+        ESP_LOGE(TAG, "Falha ao criar a fila ou o grupo de eventos!");
+        return;
+    }
+    
+    ESP_LOGI(TAG, "Fila de alertas e grupo de eventos criados com sucesso.");
 
+    // 4. Inicializar os Módulos de Hardware
     mq5_sensor_init(gas_alert_queue);
     buzzer_control_init(gas_alert_queue);
+
+    // 5. Inicializar o Gerenciador de Wi-Fi (ele cria o event loop internamente)
+    ESP_ERROR_CHECK(wifi_sta_init(wifi_event_group));
+
+    // 6. Esperar até o Wi-Fi conectar e obter um IP
+    ESP_LOGI(TAG, "Aguardando conexão Wi-Fi e obtenção de IP...");
+    EventBits_t bits = xEventGroupWaitBits(
+        wifi_event_group,
+        WIFI_STA_IPV4_OBTAINED_BIT,
+        pdFALSE,
+        pdTRUE,
+        portMAX_DELAY
+    );
+
+    if (bits & WIFI_STA_IPV4_OBTAINED_BIT) {
+        ESP_LOGI(TAG, "Wi-Fi e IP prontos. Iniciando MQTT...");
+        mqtt_manager_init();
+    } else {
+        ESP_LOGE(TAG, "Falha ao conectar o Wi-Fi ou obter IP. MQTT não será iniciado.");
+    }
 
     ESP_LOGI(TAG, "Inicialização completa. Tarefas em execução.");
 }

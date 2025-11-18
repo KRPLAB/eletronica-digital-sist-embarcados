@@ -1,48 +1,36 @@
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
-#include "esp_err.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+
+// --- Bits do "Quadro de Luzes" (EventGroup) ---
+// Necessário definir estes bits para que app_main e wifi_manager estejam com a mesma definição
+#define WIFI_STA_CONNECTED_BIT      BIT0    // O Wi-Fi conectou (tem sinal)
+#define WIFI_STA_IPV4_OBTAINED_BIT  BIT1    // O Wi-Fi obteve um IP (está na rede)
+#define WIFI_STA_IPV6_OBTAINED_BIT  BIT2    // (Para redes IPv6)
 
 /**
- * @brief Event group for Wi-Fi events
+ * @brief Inicializa e inicia o Wi-Fi em modo Estação (STA).
+ *
+ * @param event_group Handle do EventGroup (criado no app_main) que será usado
+ * para sinalizar o status da conexão (ex: IP obtido).
+ * @return esp_err_t ESP_OK em sucesso, ou um código de erro.
  */
-#define WIFI_STA_CONNECTED_BIT      BIT0
-#define WIFI_STA_IPV4_OBTAINED_BIT  BIT1
-#define WIFI_STA_IPV6_OBTAINED_BIT  BIT2
+esp_err_t wifi_sta_init(EventGroupHandle_t event_group);
 
 /**
- * @brief Initialize the Wi-Fi manager in station mode.
- * 
- * Set up the Wi-Fi interface and connect to a Wi-Fi network. Is possible uses
- * event groups to wait for a connection and IP address assignment.
- * 
- * Important: This function must be called after calling esp_netif_init() and
- * esp_event_loop_create_default().
- * 
- * @param[in] event_group Event group handle to WiFi and IP events. Can be NULL.
- * 
- * @return esp_err_t ESP_OK on success, or an error code on failure.
+ * @brief Para e desliga o Wi-Fi em modo Estação.
+ *
+ * @return esp_err_t ESP_OK em sucesso, ou um código de erro.
  */
-esp_err wifi_sta_init(EventGroupHandle_t event_group);
+esp_err_t wifi_sta_stop(void);
 
 /**
- * @brief Disable WiFi
- * @return
- *      - ESP_OK: WiFi disabled successfully
- *      - ESP_ERR_WIFI_NOT_INIT: WiFi driver was not initialized
+ * @brief Tenta se reconectar ao AP parando e reiniciando o Wi-Fi.
+ *
+ * @return esp_err_t ESP_OK em sucesso, ou um código de erro.
  */
-esp_err wifi_sta_stop(void);
+esp_err_t wifi_sta_reconnect(void);
 
-/**
- * @brief Attempt to reconnect to the Wi-Fi network.
- * 
- * @return 
- * - ESP_OK: Reconnection initiated successfully
- * - Other error codes from esp_wifi_connect()
- */
-esp_err wifi_sta_reconnect(void);
-
-
-
-void wifi_manager_init(void);
 #endif // WIFI_MANAGER_H
