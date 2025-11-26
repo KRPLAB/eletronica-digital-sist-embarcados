@@ -13,7 +13,9 @@
 
 static const char *TAG = "MQ5_SENSOR";
 
-static QueueHandle_t local_alert_queue;
+static QueueHandle_t queue_handle_buzzer;
+static QueueHandle_t queue_handle_mqtt;
+
 static adc_oneshot_unit_handle_t adc_handle;
 static adc_oneshot_chan_cfg_t chan_cfg;
 
@@ -28,7 +30,7 @@ static void sensor_task(void *pvParameters)
     // Deixar o sensor aquecer por um tempo antes de começar as leituras
     vTaskDelay(pdMS_TO_TICKS(15000));
 
-    int current_alert_state = 0;
+    int current_alert_state = -1;
     int new_alert_state = 0;
     int val_raw = 0;
 
@@ -43,13 +45,19 @@ static void sensor_task(void *pvParameters)
             ESP_LOGW(TAG, "Gás acima do limite! Valor ADC: %d", val_raw);
         } else {
             new_alert_state = 0;
+            ESP_LOGI(TAG, "Nível de gás normal. Valor ADC: %d", val_raw);
         }
 
+        // Envia para a fila sempre que o estado mudar
         if (new_alert_state != current_alert_state) {
             current_alert_state = new_alert_state;
-            ESP_LOGI(TAG, "Estado mudou para: %d. Enviando para fila.", current_alert_state);
+            ESP_LOGI(TAG, "Mudança de estado: %d. Distribuindo mensagens...", current_alert_state);
 
-            if (xQueueSend(local_alert_queue, &current_alert_state, pdMS_TO_TICKS(100)) != pdTRUE) {
+            if (xQueueSend(queue_handle_buzzer, &current_alert_state, pdMS_TO_TICKS(100)) != pdTRUE) {
+                ESP_LOGE(TAG, "Falha ao enviar para a fila!");
+            }
+
+            if (xQueueSend(queue_handle_mqtt, &current_alert_state, pdMS_TO_TICKS(100)) != pdTRUE) {
                 ESP_LOGE(TAG, "Falha ao enviar para a fila!");
             }
         }
@@ -61,9 +69,9 @@ static void sensor_task(void *pvParameters)
 /**
  * @brief Função de inicialização do módulo.
  */
-void mq5_sensor_init(QueueHandle_t queue)
-{
-    local_alert_queue = queue;
+void mq5_sensor_init(QueueHandle_t q_buzz, QueueHandle_t q_mqtt) {
+    queue_handle_buzzer = q_buzz;
+    queue_handle_mqtt = q_mqtt;
 
     adc_oneshot_unit_init_cfg_t init_cfg = {
         .unit_id = ADC_UNIT_1,
@@ -76,7 +84,5 @@ void mq5_sensor_init(QueueHandle_t queue)
 
     adc_oneshot_config_channel(adc_handle, MQ5_CHANNEL, &chan_cfg);
 
-    // Cria a Tarefa A
-    // xTaskCreate(função_da_tarefa, "nome_tarefa", stack_size, parametros, prioridade, handle_tarefa)
-    xTaskCreate(sensor_task, "sensor_task", 2048, NULL, 5, NULL);
+    xTaskCreate(sensor_task, "sensor_task", 4096, NULL, 5, NULL);
 }

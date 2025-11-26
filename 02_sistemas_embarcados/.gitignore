@@ -2,3 +2,4 @@ build/
 sdkconfig
 sdkconfig.defaults
 *.old
+credentials.h
