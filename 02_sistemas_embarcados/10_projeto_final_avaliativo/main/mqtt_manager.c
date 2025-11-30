@@ -10,8 +10,19 @@
 
 static const char *TAG = "MQTT_MANAGER";
 
-// Handle global para o cliente MQTT, para que possamos publicar de qualquer lugar
+// Handle global para o cliente MQTT
 esp_mqtt_client_handle_t client = NULL;
+
+// Buffer global para armazenar o UUID recebido e Semáforo
+char device_uuid[64] = {0};
+SemaphoreHandle_t sem_uuid_received = NULL;
+
+void mqtt_subscribe(const char *topic) {
+    if (client) {
+        esp_mqtt_client_subscribe(client, topic, 1);
+        ESP_LOGI(TAG, "Inscrito no tópico: %s", topic);
+    }
+}
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
@@ -23,8 +34,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        // Exemplo: Ao conectar, podemos nos inscrever em um topico de comando
-        // esp_mqtt_client_subscribe(client, "sistema/comandos", 0);
         break;
         
     case MQTT_EVENT_DISCONNECTED:
@@ -44,9 +53,22 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         break;
 
     case MQTT_EVENT_DATA:
-        ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
+        ESP_LOGI(TAG, "Dados recebidos.");
+        if (strstr(event->topic, "dispositivos/registro/")) {
+            // Copia o payload (UUID) para o buffer global
+            int copy_len = event->data_len;
+            if (copy_len >= sizeof(device_uuid)) copy_len = sizeof(device_uuid) - 1;
+            
+            memcpy(device_uuid, event->data, copy_len);
+            device_uuid[copy_len] = '\0';
+            
+            ESP_LOGI(TAG, "UUID Recebido do Backend: %s", device_uuid);
+            
+            // Libera o semáforo para a main prosseguir
+            if (sem_uuid_received) {
+                xSemaphoreGive(sem_uuid_received);
+            }
+        }
         break;
 
     case MQTT_EVENT_ERROR:
@@ -64,6 +86,11 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 void mqtt_manager_init(void)
 {
+    sem_uuid_received = xSemaphoreCreateBinary();
+    if (sem_uuid_received == NULL) {
+        ESP_LOGE(TAG, "Falha ao criar semáforo para UUID!");
+        return;
+    }
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri = BROKER_URI,
         //.credentials.username = "",

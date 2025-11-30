@@ -1,7 +1,13 @@
 #ifndef MQTT_MANAGER_H
 #define MQTT_MANAGER_H
 
+#include "mqtt_client.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "esp_err.h"
+
+extern char device_uuid[64];
+extern SemaphoreHandle_t sem_uuid_received;
 
 /**
  * @brief Inicializa o cliente MQTT.
@@ -16,5 +22,11 @@ void mqtt_manager_init(void);
  * @return int ID da mensagem ou -1 em caso de falha.
  */
 int mqtt_manager_publish(const char *topic, const char *message);
+
+/**
+ * @brief Inscreve-se em um tópico específico para receber mensagens.
+ * @param topic O tópico onde a inscrição será feita (ex: "casa/cozinha/gas")
+ */
+void mqtt_subscribe(const char *topic);
 
 #endif // MQTT_MANAGER_H
