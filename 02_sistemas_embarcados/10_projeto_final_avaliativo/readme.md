@@ -57,4 +57,8 @@ A arquitetura lógica se baseia em duas tarefas principais que se comunicam atra
 * **Protocolos:**
     * Wi-Fi (via `esp_wifi`)
     * MQTT (via `mqtt_client` da biblioteca `esp-mqtt`)
+ 
+## 5. Esquema de montagem
+
+![Diagrama do hardware feito na plataforma wokwi](./diagrama_wokwi.png)
     
