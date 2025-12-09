@@ -60,5 +60,5 @@ A arquitetura lógica se baseia em duas tarefas principais que se comunicam atra
  
 ## 5. Esquema de montagem
 
-![Diagrama do hardware feito na plataforma wokwi](./diagrama_wokwi.png)
+![Diagrama do hardware feito na plataforma wokwi](./diagrama-wokwi.png)
     
